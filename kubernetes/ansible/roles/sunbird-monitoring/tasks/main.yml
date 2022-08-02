@@ -1,0 +1,11 @@
+---
+# tasks file for sunbird-monitoring
+- name: tempating variables
+  template:
+    src: "dp_{{ item }}.yaml"
+    dest: "/tmp/dp_{{item}}.yaml"
+  with_items: "{{ monitoring_stack }}"
+
+- name: Creating sunbird data infra monitoring stack
+  shell: "helm upgrade --install {{ item }} {{chart_path}}/{{ item }} --namespace monitoring -f /tmp/dp_{{ item }}.yaml"
+  with_items: "{{ monitoring_stack }}"

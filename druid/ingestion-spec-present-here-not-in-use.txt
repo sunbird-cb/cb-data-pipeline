@@ -1,0 +1,3 @@
+WARNING! the ingestion spec here is not being utilized, files here have not been updated for a long time!
+
+Ingestion spec that is actually deployed is present here - ansible/roles/druid-ingestion/templates

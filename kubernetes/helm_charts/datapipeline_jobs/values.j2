@@ -1,0 +1,172 @@
+namespace: {{ flink_namespace }}
+imagepullsecrets: {{ imagepullsecrets }}
+dockerhub: {{ dockerhub }}
+repository: {{flink_repository|default('sunbird-datapipeline')}}
+image_tag: {{ image_tag }}
+
+azure_account: {{ azure_account }}
+azure_secret: {{ azure_secret }}
+
+serviceMonitor:
+  enabled: {{ service_monitor_enabled | lower}}
+replicaCount: {{taskmanager_replicacount|default(1)}}
+
+scale_properties:
+  cb-preprocessor:
+    enabled: {{ flink_job_names['cb-preprocessor'].scale_enabled | lower}}
+    scale_target_value: {{ flink_job_names['cb-preprocessor'].scale_target_value }}
+    min_replica: {{ flink_job_names['cb-preprocessor'].min_replica | default(1) }}
+    max_replica: {{ flink_job_names['cb-preprocessor'].max_replica | default(2) }}
+
+jobmanager:
+  rpc_port: {{ jobmanager_rpc_port }}
+  blob_port: {{ jobmanager_blob_port }}
+  query_port: {{ jobmanager_query_port }}
+  ui_port: {{ jobmanager_ui_port }}
+  prom_port: {{ jobmanager_prom_port }}
+  heap_memory: {{ jobmanager_heap_memory }}
+
+service: {{ jobmanager_ui_service|to_json }}
+
+rest_port: {{ jobmanager_ui_rest_port }}
+resttcp_port: {{ jobmanager_ui_tcp_port }}
+
+taskmanager:
+  prom_port: {{ taskmanager_prom_port }}
+  rpc_port: {{ taskmanager_rpc_port }}
+  heap_memory: {{ taskmanager_heap_memory }}
+  replicas: {{taskmanager_replicacount|default(1)}}
+  cpu_requests: {{ cpu_requests|default(1)}}
+
+job_classname: {{ job_classname }}
+{{ taskmanager_liveness | to_nice_yaml }}
+
+log4j_console_properties: |
+  # This affects logging for both user code and Flink
+  rootLogger.level = {{ flink_jobs_console_log_level | default(INFO) }}
+  rootLogger.appenderRef.console.ref = ConsoleAppender
+
+  # Uncomment this if you want to _only_ change Flink's logging
+  #logger.flink.name = org.apache.flink
+  #logger.flink.level = {{ flink_jobs_console_log_level | default(INFO) }}
+
+  # The following lines keep the log level of common libraries/connectors on
+  # log level INFO. The root logger does not override this. You have to manually
+  # change the log levels here.
+  logger.akka.name = akka
+  logger.akka.level = {{ flink_libraries_log_level | default(INFO) }}
+  logger.kafka.name= org.apache.kafka
+  logger.kafka.level = {{ flink_libraries_log_level | default(INFO) }}
+  logger.hadoop.name = org.apache.hadoop
+  logger.hadoop.level = {{ flink_libraries_log_level | default(INFO) }}
+  logger.zookeeper.name = org.apache.zookeeper
+  logger.zookeeper.level = {{ flink_libraries_log_level | default(INFO) }}
+
+  # Log all infos to the console
+  appender.console.name = ConsoleAppender
+  appender.console.type = CONSOLE
+  appender.console.layout.type = PatternLayout
+  appender.console.layout.pattern = %d{yyyy-MM-dd HH:mm:ss,SSS} %-5p %-60c %x - %m%n
+
+  # Suppress the irrelevant (wrong) warnings from the Netty channel handler
+  logger.netty.name = org.apache.flink.shaded.akka.org.jboss.netty.channel.DefaultChannelPipeline
+  logger.netty.level = OFF
+
+base_config: |
+  kafka {
+      broker-servers = "{{ kafka_brokers }}"
+      producer.broker-servers = "{{ kafka_brokers }}"
+      consumer.broker-servers = "{{ kafka_brokers }}"
+      zookeeper = "{{ zookeepers }}"
+      producer {
+        max-request-size = {{ producer_max_request_size }}
+        batch.size = {{ producer_batch_size }}
+        linger.ms = {{ producer_linger_ms }}
+      }
+    }
+    job {
+      env = "{{ env_name }}"
+      enable.distributed.checkpointing = true
+      statebackend {
+        blob {
+          storage {
+            account = "{{ azure_account }}.blob.core.windows.net"
+            container = "{{ flink_container_name }}"
+            checkpointing.dir = "checkpoint"
+          }
+        }
+        base.url = "wasbs://"${job.statebackend.blob.storage.container}"@"${job.statebackend.blob.storage.account}"/"${job.statebackend.blob.storage.checkpointing.dir}
+      }
+    }
+    task {
+      parallelism = 1
+      consumer.parallelism = 1
+      checkpointing.compressed = {{ checkpoint_compression_enabled|lower }}
+      checkpointing.interval = {{ checkpoint_interval }}
+      checkpointing.pause.between.seconds = {{ checkpoint_pause_between_seconds }}
+      restart-strategy.attempts = {{ restart_attempts }}
+      restart-strategy.delay = {{ restart_delay }} # in milli-seconds
+    }
+    redisdb.connection.timeout = {{ redis_timeout }}
+    redis {
+      host = {{ redis_host }}
+      port = 6379
+    }
+    redis-meta {
+{% if metadata2_redis_host is defined %}
+      host = {{ metadata2_redis_host }}
+{% else %}
+      host = {{ redis_host }}
+{% endif %}
+      port = 6379
+    }
+    postgres {
+      host = {{ postgres.db_url }}
+      port = {{ postgres.db_port }}
+      maxConnections = {{ postgres_max_connections }}
+      user = "{{ postgres.db_username }}"
+      password = "{{ postgres.db_password }}"
+    }
+    lms-cassandra {
+      host = "{{ core_cassandra_host }}"
+      port = "9042"
+    }
+
+cb-preprocessor:
+  cb-preprocessor: |+
+    include file("/data/flink/conf/base-config.conf")
+    kafka {
+      input.topic = {{ env_name }}.telemetry.cb.audit
+      output.failed.topic = {{ env_name }}.telemetry.failed
+      output.duplicate.topic = {{ env_name }}.telemetry.duplicate
+      output.cb.audit.topic = {{ env_name }}.druid.cb.audit
+      output.cb.work.order.row.topic = {{ env_name }}.druid.cb.work.order.row
+      output.cb.work.order.officer.topic = {{ env_name }}.druid.cb.work.order.officer
+      groupId = {{ env_name }}-cb-preprocessor-group
+    }
+    task {
+      consumer.parallelism = {{ cb_preprocessor_consumer_parallelism }}
+      downstream.operators.parallelism = {{ cb_preprocessor_operators_parallelism }}
+    }
+
+    default.channel="b00bc992ef25f1a9a8d63291e20efc8d"
+    redis {
+      database {
+        duplicationstore.id = 7
+        key.expiry.seconds = {{ cb_preprocessor_key_expiry_seconds }}
+      }
+    }
+
+  flink-conf: |+
+    jobmanager.memory.flink.size: {{ flink_job_names['cb-preprocessor'].jobmanager_memory }}
+    taskmanager.memory.flink.size: {{ flink_job_names['cb-preprocessor'].taskmanager_memory }}
+    taskmanager.numberOfTaskSlots: {{ flink_job_names['cb-preprocessor'].taskslots }}
+    parallelism.default: 1
+    jobmanager.execution.failover-strategy: region
+    taskmanager.memory.network.fraction: 0.1
+    scheduler-mode: reactive
+    heartbeat.timeout: 8000
+    heartbeat.interval: 5000
+    taskmanager.memory.process.size: {{ flink_job_names['cb-preprocessor'].taskmanager_process_memory }}
+    jobmanager.memory.process.size: {{ flink_job_names['cb-preprocessor'].jobmanager_process_memory }}
+

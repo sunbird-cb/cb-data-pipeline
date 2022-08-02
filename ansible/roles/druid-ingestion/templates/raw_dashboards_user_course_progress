@@ -1,0 +1,84 @@
+{
+  "type": "kafka",
+  "dataSchema": {
+    "dataSource": "dashboards-user-course-progress",
+    "parser": {
+      "type": "string",
+      "parseSpec": {
+        "format": "json",
+        "flattenSpec": {
+          "useFieldDiscovery": false,
+          "fields": [
+            {
+              "type": "root",
+              "name": "userId",
+              "expr": "$.completionUserID"
+            },
+            {
+              "type": "root",
+              "name": "courseId",
+              "expr": "$.completionCourseID"
+            },
+            {
+              "type": "root",
+              "name": "completionPercentage",
+              "expr": "$.completionPercentage"
+            },
+            {
+              "type": "root",
+              "name": "completionStatus",
+              "expr": "$.completionStatus"
+            }
+          ]
+        },
+        "dimensionsSpec": {
+          "dimensions": [
+            {
+              "type": "string",
+              "name": "userId"
+            },
+            {
+              "type": "string",
+              "name": "courseId"
+            },
+            {
+              "type": "string",
+              "name": "completionPercentage"
+            },
+            {
+              "type": "string",
+              "name": "completionStatus"
+            }
+          ],
+          "dimensionsExclusions": []
+        },
+        "timestampSpec": {
+          "column": "timestamp",
+          "format": "auto"
+        }
+      }
+    },
+    "metricsSpec": [],
+    "granularitySpec": {
+      "type": "uniform",
+      "segmentGranularity": "day",
+      "rollup": false
+    }
+  },
+  "ioConfig": {
+    "topic": "{{ env }}.dashboards.user.course.progress",
+    "consumerProperties": {
+      "bootstrap.servers": "{{kafka_brokers}}"
+    },
+    "taskCount": "{{raw_dashboards_user_course_progress_taskcount}}",
+    "replicas": 1,
+    "taskDuration": "PT7200S",
+    "useEarliestOffset": true,
+    "completionTimeout" : "PT7200S"
+  },
+  "tuningConfig": {
+    "type": "kafka",
+    "reportParseExceptions": false,
+    "maxRowsPerSegment": "2000000"
+  }
+}
