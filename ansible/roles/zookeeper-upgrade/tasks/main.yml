@@ -1,0 +1,13 @@
+---
+
+- name: setup group
+  group: name={{ zookeeper_user }} system=yes
+
+- name: Setup user
+  user: name={{ zookeeper_user }} system=yes group={{ zookeeper_user }}
+
+- include: Debian.yml
+  when: ansible_os_family == 'Debian'
+
+- include: RedHat.yml
+  when: ansible_os_family == 'RedHat'

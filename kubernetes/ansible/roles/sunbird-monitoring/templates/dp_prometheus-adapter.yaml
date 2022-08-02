@@ -1,0 +1,25 @@
+# Default values for k8s-prometheus-adapter..
+
+# Url to access prometheus
+prometheus:
+  url: http://sunbird-monitoring-prometheus.monitoring.svc.cluster.local
+  port: 9090
+  path: ""
+
+rules:
+  default: true
+  custom: {}
+  existing:
+  external:
+  - seriesQuery: 'kafka_consumergroup_lag_sum'
+    resources:
+      overrides:
+        namespace:
+          resource: namespace
+        pod:
+          resource: pod
+    name:
+      matches: "^(.*)"
+      as: "cb-preprocessor_kafka_consumergroup_lag_sum"
+    metricsQuery: sum(kafka_consumergroup_lag_sum{consumergroup="{{ env_name }}-cb-preprocessor-group",topic="{{ env_name }}.events.deviceprofile"}) by (<<.GroupBy>>)
+  

@@ -1,0 +1,56 @@
+---
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  labels:
+    role: alert-rules
+    app: {{ .Values.prometheus_rule_selector_app }}
+    release: {{ .Values.prometheus_rule_selector_release }}
+  name: {{ .Values.fullnameOverride }}-flinkjobs-rules
+  namespace: {{ .Values.namespace }}
+spec:
+  groups:
+  - name: alertrules.flinkjobs
+    rules:
+    - alert: cb-preprocessor lag critical
+      expr: sum(flink_taskmanager_job_task_operator_KafkaConsumer_records_lag_max { job = "cb-preprocessor-taskmanager-prometheus" }) > {{ .Values.cb_preprocessor_threshold_critical }}
+      for: 5m
+      labels:
+        severity: critical
+        alerttype: lag
+      annotations:
+        message: The lag for cb-preprocessor job is more than threshold {{ .Values.cb_preprocessor_threshold_critical | int }}
+        summary: cb-preprocessor lag is critical
+        lag: {{`({{ humanize $value }})`}}
+        job_id: cb-preprocessor
+        alertname: FlinkJobsLag
+
+### Dp Flink jobs lag alertrules warning
+
+    - alert: cb-preprocessor lag warning
+      expr: sum(flink_taskmanager_job_task_operator_KafkaConsumer_records_lag_max { job = "cb-preprocessor-taskmanager-prometheus" }) > {{ .Values.cb_preprocessor_threshold_warning }} and sum(flink_taskmanager_job_task_operator_KafkaConsumer_records_lag_max { job = "cb-preprocessor-taskmanager-prometheus" }) < {{ .Values.cb_preprocessor_threshold_critical }}
+      for: 5m
+      labels:
+        severity: warning
+        alerttype: lag
+      annotations:
+        message: The lag for cb-preprocessor job is more than threshold {{ .Values.cb_preprocessor_threshold_warning | int }}
+        summary: cb-preprocessor lag is warning
+        lag: {{`({{ humanize $value }})`}}
+        job_id: cb-preprocessor
+        alertname: FlinkJobsLag
+
+#### Checkpoint failure alert rules
+
+    - alert: cb-preprocessor checkpoint failure critical
+      expr: sum(flink_jobmanager_job_numberOfFailedCheckpoints { job = "cb-preprocessor-jobmanager" }) > {{ .Values.cb_preprocessor_checkpointfailure_threshold_critical }}
+      for: 5m
+      labels:
+        severity: critical
+        alerttype: lag
+      annotations:
+        message: The checkpoint failure count for cb-preprocessor job is more than threshold {{ .Values.cb_preprocessor_checkpointfailure_threshold_critical }}
+        summary: cb-preprocessor checkpoint failure critical
+        lag: {{`({{ humanize $value }})`}}
+        job_id: cb-preprocessor
+        alertname: Flink jobs checkpoint commit failure

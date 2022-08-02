@@ -1,0 +1,93 @@
+{
+  "type": "kafka",
+  "dataSchema": {
+    "dataSource": "dashboards-course-competency",
+    "parser": {
+      "type": "string",
+      "parseSpec": {
+        "format": "json",
+        "flattenSpec": {
+          "useFieldDiscovery": false,
+          "fields": [
+            {
+              "type": "root",
+              "name": "courseId",
+              "expr": "$.courseID"
+            },
+            {
+              "type": "root",
+              "name": "courseStatus",
+              "expr": "$.courseStatus"
+            },
+            {
+              "type": "root",
+              "name": "courseChannel",
+              "expr": "$.courseChannel"
+            },
+            {
+              "type": "root",
+              "name": "courseCompetencyId",
+              "expr": "$.courseCompetencyID"
+            },
+            {
+              "type": "root",
+              "name": "courseCompetencyLevel",
+              "expr": "$.courseCompetencyLevel"
+            }
+          ]
+        },
+        "dimensionsSpec": {
+          "dimensions": [
+            {
+              "type": "string",
+              "name": "courseId"
+            },
+            {
+              "type": "string",
+              "name": "courseStatus"
+            },
+            {
+              "type": "string",
+              "name": "courseChannel"
+            },
+            {
+              "type": "string",
+              "name": "courseCompetencyId"
+            },
+            {
+              "type": "string",
+              "name": "courseCompetencyLevel"
+            }
+          ],
+          "dimensionsExclusions": []
+        },
+        "timestampSpec": {
+          "column": "timestamp",
+          "format": "auto"
+        }
+      }
+    },
+    "metricsSpec": [],
+    "granularitySpec": {
+      "type": "uniform",
+      "segmentGranularity": "day",
+      "rollup": false
+    }
+  },
+  "ioConfig": {
+    "topic": "{{ env }}.dashboards.competency.course",
+    "consumerProperties": {
+      "bootstrap.servers": "{{kafka_brokers}}"
+    },
+    "taskCount": "{{raw_dashboards_course_competency_taskcount}}",
+    "replicas": 1,
+    "taskDuration": "PT7200S",
+    "useEarliestOffset": true,
+    "completionTimeout" : "PT7200S"
+  },
+  "tuningConfig": {
+    "type": "kafka",
+    "reportParseExceptions": false,
+    "maxRowsPerSegment": "2000000"
+  }
+}

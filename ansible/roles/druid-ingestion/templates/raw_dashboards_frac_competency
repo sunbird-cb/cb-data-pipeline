@@ -1,0 +1,75 @@
+{
+  "type": "kafka",
+  "dataSchema": {
+    "dataSource": "dashboards-frac-competency",
+    "parser": {
+      "type": "string",
+      "parseSpec": {
+        "format": "json",
+        "flattenSpec": {
+          "useFieldDiscovery": false,
+          "fields": [
+            {
+              "type": "root",
+              "name": "fracCompetencyID",
+              "expr": "$.fracCompetencyID"
+            },
+            {
+              "type": "root",
+              "name": "fracCompetencyName",
+              "expr": "$.fracCompetencyName"
+            },
+            {
+              "type": "root",
+              "name": "fracCompetencyStatus",
+              "expr": "$.fracCompetencyStatus"
+            }
+          ]
+        },
+        "dimensionsSpec": {
+          "dimensions": [
+            {
+              "type": "string",
+              "name": "fracCompetencyID"
+            },
+            {
+              "type": "string",
+              "name": "fracCompetencyName"
+            },
+            {
+              "type": "string",
+              "name": "completionPercentage"
+            }
+          ],
+          "dimensionsExclusions": []
+        },
+        "timestampSpec": {
+          "column": "timestamp",
+          "format": "auto"
+        }
+      }
+    },
+    "metricsSpec": [],
+    "granularitySpec": {
+      "type": "uniform",
+      "segmentGranularity": "day",
+      "rollup": false
+    }
+  },
+  "ioConfig": {
+    "topic": "{{ env }}.dashboards.competency.frac",
+    "consumerProperties": {
+      "bootstrap.servers": "{{kafka_brokers}}"
+    },
+    "taskCount": "{{raw_dashboards_frac_competency_taskcount}}",
+    "replicas": 1,
+    "taskDuration": "PT7200S",
+    "useEarliestOffset": true,
+    "completionTimeout" : "PT7200S"
+  },
+  "tuningConfig": {
+    "type": "kafka",
+    "reportParseExceptions": false,
+    "maxRowsPerSegment": "2000000"
+  }
+}

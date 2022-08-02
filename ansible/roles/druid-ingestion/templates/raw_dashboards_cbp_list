@@ -1,0 +1,93 @@
+{
+  "type": "kafka",
+  "dataSchema": {
+    "dataSource": "dashboards-cbp-list",
+    "parser": {
+      "type": "string",
+      "parseSpec": {
+        "format": "json",
+        "flattenSpec": {
+          "useFieldDiscovery": false,
+          "fields": [
+            {
+              "type": "root",
+              "name": "id",
+              "expr": "$.id"
+            },
+            {
+              "type": "root",
+              "name": "channel",
+              "expr": "$.channel"
+            },
+            {
+              "type": "root",
+              "name": "organisationType",
+              "expr": "$.organisationType"
+            },
+            {
+              "type": "root",
+              "name": "orgName",
+              "expr": "$.orgName"
+            },
+            {
+              "type": "root",
+              "name": "rootOrgId",
+              "expr": "$.rootOrgId"
+            }
+          ]
+        },
+        "dimensionsSpec": {
+          "dimensions": [
+            {
+              "type": "string",
+              "name": "id"
+            },
+            {
+              "type": "string",
+              "name": "channel"
+            },
+            {
+              "type": "string",
+              "name": "organisationType"
+            },
+            {
+              "type": "string",
+              "name": "orgName"
+            },
+            {
+              "type": "string",
+              "name": "rootOrgId"
+            }
+          ],
+          "dimensionsExclusions": []
+        },
+        "timestampSpec": {
+          "column": "timestamp",
+          "format": "auto"
+        }
+      }
+    },
+    "metricsSpec": [],
+    "granularitySpec": {
+      "type": "uniform",
+      "segmentGranularity": "day",
+      "rollup": false
+    }
+  },
+  "ioConfig": {
+    "topic": "{{ env }}.dashboards.cbp.search",
+    "consumerProperties": {
+      "bootstrap.servers": "{{kafka_brokers}}"
+    },
+    "taskCount": "{{raw_dashboards_cbp_list_taskcount}}",
+    "replicas": 1,
+    "taskDuration": "PT7200S",
+    "useEarliestOffset": true,
+    "completionTimeout" : "PT7200S"
+  },
+  "tuningConfig": {
+    "type": "kafka",
+    "reportParseExceptions": false,
+    "maxRowsPerSegment": "2000000"
+  }
+}

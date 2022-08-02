@@ -1,0 +1,74 @@
+flink_namespace: "flink-{{ env }}"
+imagepullsecrets: "{{ env }}-registry-secret"
+service_monitor_enabled: true
+### Job manager related vars
+jobmanager_rpc_port: 6123
+jobmanager_blob_port: 6124
+jobmanager_query_port: 6125
+jobmanager_ui_port: 8081
+jobmanager_prom_port: 9250
+jobmanager_heap_memory: 1024
+jobmanager_ui_rest_port: 80
+jobmanager_ui_tcp_port: 8081
+jobmanager_ui_service:
+  type: LoadBalancer
+  annotations:
+    service.beta.kubernetes.io/azure-load-balancer-internal: "true"
+
+### taskmanager related vars
+healthcheck: true
+taskmanager_liveness:
+  livenessProbe:
+    tcpSocket:
+      port: 6122
+    initialDelaySeconds: 30
+    periodSeconds: 60
+
+taskmanager_prom_port: 9251
+taskmanager_rpc_port: 6122
+taskmanager_heap_memory: 1024
+
+### base-config related vars
+postgres_max_connections: 2
+azure_account: "{{ sunbird_private_storage_account_name }}"
+azure_secret: "{{ sunbird_private_storage_account_key }}"
+flink_container_name: dev-data-store
+checkpoint_interval: 60000
+checkpoint_pause_between_seconds: 5000
+checkpoint_compression_enabled: true
+restart_attempts: 3
+restart_delay: 30000 # in milli-seconds
+producer_max_request_size: 1572864
+producer_batch_size: 98304
+producer_linger_ms: 10
+
+redis_timeout: 30000
+device_profile_table: "{{ env }}_device_profile"
+
+### cb-preprocessor related vars
+cb_preprocessor_consumer_parallelism: 1
+cb_preprocessor_operators_parallelism: 1
+cb_preprocessor_key_expiry_seconds: 3600
+
+### to be removed
+job_classname: ""
+
+### class name vars
+flink_job_names:
+  cb-preprocessor:
+    job_class_name: 'org.sunbird.dp.cbpreprocessor.task.CBPreprocessorStreamTask'
+    replica: 1
+    jobmanager_memory: 1024m
+    taskmanager_memory: 1024m
+    taskmanager_process_memory: 1700m
+    jobmanager_process_memory: 1600m
+    taskslots: 1
+    cpu_requests: 0.3
+    scale_enabled: true
+    scale_target_value: 500000
+    min_replica: 1
+    max_replica: 2    
+
+### controlling the flink jobs log level
+flink_jobs_console_log_level: INFO
+flink_libraries_log_level: ERROR

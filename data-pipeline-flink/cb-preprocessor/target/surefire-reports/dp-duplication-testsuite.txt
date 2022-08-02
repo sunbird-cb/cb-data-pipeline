@@ -1,0 +1,15 @@
+[36mDiscovery starting.[0m
+[36mDiscovery completed in 594 milliseconds.[0m
+[36mRun starting. Expected test count is: 3[0m
+[32mCBEventsFlattenerTestSpec:[0m
+[32mCBEventsFlattener[0m
+[32m- should flatten a valid work order event[0m
+[32mCBEventsFlattener[0m
+[32m- should flatten a valid work order event to officer level[0m
+[32mCBEventsFlattener[0m
+[32m- should handle missing keys and null values in a work order event[0m
+[36mRun completed in 1 second, 53 milliseconds.[0m
+[36mTotal number of tests run: 3[0m
+[36mSuites: completed 2, aborted 0[0m
+[36mTests: succeeded 3, failed 0, canceled 0, ignored 0, pending 0[0m
+[32mAll tests passed.[0m

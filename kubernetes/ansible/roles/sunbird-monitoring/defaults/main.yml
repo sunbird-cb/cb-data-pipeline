@@ -1,0 +1,53 @@
+---
+# defaults file for sunbird-monitoring
+fullnameOverride: sunbird-monitoring
+monitoring_stack:
+  - prometheus-operator
+  - alertrules
+  - prometheus-adapter
+  - processing-kafka-exporter
+
+namespace: monitoring
+flink_namespace: flink-dev
+env: dev
+kubernetes_cluster_name: kubernetes-dp-{{ env }}
+
+monitor_alerts_mail_from_email: "{{ alert_from_address }}"
+monitor_alerts_mail_server_host: "{{ sendgrid_hostname }}" 
+monitor_alerts_mail_server_port: 587
+monitor_alerts_mail_server_username: "{{ SGUSER }}" 
+monitor_alerts_mail_server_password: "{{ SGPASS }}" 
+dp_monitor_alerts_slack_url: 
+dp_monitor_alerts_slack_channel: "{{ env }}_flink_alerts"
+dp_monitor_alerts_warning_slack_url: 
+dp_monitor_alerts_warning_slack_channel: "{{ env }}_pipeline_warning_alerts"
+dp_monitor_alerts_critical_slack_url:
+dp_monitor_alerts_critical_slack_channel: "{{ env }}_pipeline_critical_alerts"
+
+default_critical_mailing_list: "{{ default_mailing_list }}"
+default_fatal_mailing_list: "{{ default_mailing_list }}"
+default_mailing_list: kaliraja.ramasamy@tarento.com, anandp@ilimi.in, manjunathd@ilimi.in
+
+# flink Jobs lag vars critical 
+cb_preprocessor_threshold_critical: 50000
+
+# Flink jobs lag warning
+cb_preprocessor_threshold_warning: 30000
+
+# Flink jobmanager Checkpoint failure vars
+cb_preprocessor_checkpointfailure_threshold_critical: 5
+
+nginx_tps_threshold: 50 # being used in flink jobs percentage lag alert rules
+flink_lag_percentage_threshold: 10 # being used in flink jobs percentage lag alert rule
+flink_lag_offset_duration: 30 # values in minutes and being used in alert rule
+
+pv_usage_threshold_critical: 90  # If the persistant volume used percentage is greater than 90% then will get an alert.
+kafka_exporter_image_tag: v1.3.0
+# kafka exporters vars
+### processing kafka exporters related vars
+processing_cluster_zookeeper: "{{ groups['processing-cluster-zookeepers'] | difference(['localhost']) | map('regex_replace', '^(.*)$', '\\1:2181') | list}}"
+processing_cluster_kafka: "{{ groups['processing-cluster-kafka'] | difference(['localhost']) | map('regex_replace', '^(.*)$', '\\1:9092') | list}}"
+
+### ingestion kafka exporters related vars.
+ingestion_cluster_zookeeper: "{{ groups['ingestion-cluster-zookeeper'] | difference(['localhost']) | map('regex_replace', '^(.*)$', '\\1:2181') | list}}"
+ingestion_cluster_kafka: "{{ groups['ingestion-cluster-kafka'] | difference(['localhost']) | map('regex_replace', '^(.*)$', '\\1:9092') | list}}"
